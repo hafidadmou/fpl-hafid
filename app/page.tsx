@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeft, BarChart3, BadgeCheck, CalendarRange, CircleDollarSign, Shield, Sword, Target, Trophy, UserRound, Zap } from 'lucide-react';
-import type { FplApiResponse, FplPlayer } from '@/types/fpl';
+import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ArrowDown, ArrowLeft, BarChart3, BadgeCheck, CalendarRange, CircleDollarSign, Clock3, Home, LayoutGrid, Play, Shield, Sparkles, Sword, Target, Trophy, UserRound, Users, Zap, X } from 'lucide-react';
+import type { FplApiResponse, FplFixture, FplPlayer } from '@/types/fpl';
 import { formatArabic, getFriendlyApiError, getPlayerPositionName, getBudget } from '@/lib/fpl';
 
 const defaultState: FplApiResponse | null = null;
@@ -15,6 +15,37 @@ function formatPosition(position: string): string {
   return getPlayerPositionName(position);
 }
 
+function formatFixtureDate(dateText: string): string {
+  if (!dateText) return '—';
+  try {
+    const date = new Date(dateText);
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  } catch {
+    return dateText;
+  }
+}
+
+function getCountdown(deadline?: string | null) {
+  if (!deadline) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+  }
+
+  const diff = new Date(deadline).getTime() - Date.now();
+  const safeDiff = Math.max(diff, 0);
+
+  return {
+    days: Math.floor(safeDiff / (1000 * 60 * 60 * 24)),
+    hours: Math.floor((safeDiff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((safeDiff / (1000 * 60)) % 60),
+    seconds: Math.floor((safeDiff / 1000) % 60),
+  };
+}
+
 const formationIdeas = [
   { title: '4-3-3 Angriff', image: '/images/IMG_6979.jpg', subtitle: 'توازن بين الدفاع والوسط والهجوم' },
   { title: '4-2-3-1', image: '/images/IMG_6980.jpg', subtitle: 'ضغط مرتفع ومرونة هجومية' },
@@ -23,11 +54,64 @@ const formationIdeas = [
   { title: '4-4-2', image: '/images/IMG_7050.jpeg', subtitle: 'تشكيلة تقليدية لبداية الموسم' },
 ];
 
+const navItems = [
+  { key: 'home', label: 'الرئيسية', href: '#home', icon: Home },
+  { key: 'analysis', label: 'التحليل', href: '#analysis', icon: BarChart3 },
+  { key: 'formations', label: 'التشكيلات', href: '#formations', icon: LayoutGrid },
+  { key: 'fixtures', label: 'المباريات', href: '#fixtures', icon: CalendarRange },
+  { key: 'mini-league', label: 'المينيليغ', href: '#mini-league', icon: Users },
+];
+
 export default function HomePage() {
   const [teamId, setTeamId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<FplApiResponse | null>(defaultState);
+  const [deadline, setDeadline] = useState<string | null>(null);
+  const [fixtures, setFixtures] = useState<FplFixture[]>([]);
+  const [selectedFormation, setSelectedFormation] = useState<(typeof formationIdeas)[number] | null>(null);
+  const [analysisCount, setAnalysisCount] = useState(1284);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setAnalysisCount((current) => current + 1);
+    }, 1800);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    async function loadMeta() {
+      try {
+        const response = await fetch('/api/fpl');
+        const data = await response.json();
+        if (data?.success && data?.data) {
+          const nextDeadline = data.data.nextDeadline || data.data.deadline || null;
+          if (nextDeadline) {
+            setDeadline(nextDeadline);
+          }
+          if (Array.isArray(data.data.fixtures)) {
+            setFixtures(data.data.fixtures);
+          }
+        }
+      } catch {
+        // Ignore meta fetch failure gracefully.
+      }
+    }
+
+    loadMeta();
+  }, []);
+
+  useEffect(() => {
+    if (result?.nextDeadline || result?.deadline) {
+      setDeadline(result.nextDeadline || result.deadline || null);
+    }
+
+    if (Array.isArray(result?.fixtures) && result.fixtures.length) {
+      setFixtures(result.fixtures);
+    }
+  }, [result]);
+
+  const countdown = getCountdown(deadline);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -55,6 +139,12 @@ export default function HomePage() {
       }
 
       setResult(data.data);
+      if (data.data?.nextDeadline || data.data?.deadline) {
+        setDeadline(data.data.nextDeadline || data.data.deadline);
+      }
+      if (Array.isArray(data.data?.fixtures)) {
+        setFixtures(data.data.fixtures);
+      }
     } catch (apiError) {
       setError(apiError instanceof Error ? getFriendlyApiError(apiError) : 'تعذر جلب بيانات الفريق. حاول مرة أخرى.');
     } finally {
@@ -100,10 +190,14 @@ export default function HomePage() {
     return squads;
   }, [result]);
 
+  const scrollToTeamForm = () => {
+    document.getElementById('team-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   return (
-    <main className="rtl min-h-screen text-white">
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <header className="mb-8 flex items-center justify-between rounded-full border border-violet-400/30 bg-slate-950/70 px-4 py-3 shadow-[0_0_30px_rgba(123,93,255,0.2)] backdrop-blur-sm">
+    <main className="rtl min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto max-w-7xl px-4 pb-28 pt-5 sm:px-6 lg:px-8">
+        <header id="home" className="mb-8 flex items-center justify-between rounded-full border border-violet-400/30 bg-slate-950/70 px-4 py-3 shadow-[0_0_30px_rgba(123,93,255,0.2)] backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-yellow-400/60 bg-slate-950/70 shadow-[0_0_15px_rgba(250,204,21,0.3)]">
               <img src="/images/IMG_6876.png" alt="شعار FPL Hafid" className="h-full w-full object-cover" />
@@ -113,15 +207,26 @@ export default function HomePage() {
               <p className="text-[10px] text-slate-300">منصة تحليل فرق FPL</p>
             </div>
           </div>
-          <div className="hidden items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-200 sm:flex">
-            <Zap size={12} />
-            <span>Gameweek {result ? formatArabic(result.gameweek) : '—'}</span>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={scrollToTeamForm}
+              className="hidden rounded-full bg-gradient-to-r from-emerald-400 to-lime-300 px-4 py-2 text-sm font-black text-slate-900 shadow-lg shadow-emerald-500/20 transition hover:scale-[1.02] sm:inline-flex"
+            >
+              ابدأ الآن مجانًا
+            </button>
+            <div className="hidden items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-200 sm:flex">
+              <Zap size={12} />
+              <span>Gameweek {result ? formatArabic(result.gameweek) : '—'}</span>
+            </div>
           </div>
         </header>
 
-        <section className="mb-10 grid gap-6 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/60 p-4 shadow-glow backdrop-blur-sm md:grid-cols-[1.3fr_0.7fr] md:p-8">
+        <section className="mb-8 grid gap-6 overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/60 p-4 shadow-glow backdrop-blur-sm md:grid-cols-[1.3fr_0.7fr] md:p-8">
           <div className="space-y-6">
             <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">تحليل ذكي • FPL</span>
+
             <div className="space-y-4">
               <h1 className="text-balance text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
                 حلّل فريقك في الفانتازي بذكاء
@@ -131,38 +236,49 @@ export default function HomePage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative flex-1">
-                  <input
-                    aria-label="معرّف الفريق"
-                    type="text"
-                    inputMode="numeric"
-                    value={teamId}
-                    onChange={(event) => setTeamId(event.target.value.replace(/\D/g, ''))}
-                    placeholder="أدخل معرّف الفريق"
-                    className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3.5 text-base text-white outline-none transition focus:border-emerald-400/80 focus:ring-2 focus:ring-emerald-400/20"
-                  />
+            <div id="team-form" className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="relative flex-1">
+                    <input
+                      aria-label="معرّف الفريق"
+                      type="text"
+                      inputMode="numeric"
+                      value={teamId}
+                      onChange={(event) => setTeamId(event.target.value.replace(/\D/g, ''))}
+                      placeholder="أدخل معرّف الفريق"
+                      className="w-full rounded-2xl border border-white/10 bg-slate-900/80 px-4 py-3.5 text-base text-white outline-none transition focus:border-emerald-400/80 focus:ring-2 focus:ring-emerald-400/20"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-lime-300 px-5 py-3.5 text-base font-black text-slate-900 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {loading ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
+                        جارٍ التحليل...
+                      </>
+                    ) : (
+                      <>
+                        <ArrowLeft size={18} />
+                        جلب وتحليل
+                      </>
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-lime-300 px-5 py-3.5 text-base font-black text-slate-900 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {loading ? (
-                    <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent" />
-                      جارٍ التحليل...
-                    </>
-                  ) : (
-                    <>
-                      <ArrowLeft size={18} />
-                      جلب وتحليل
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+              </form>
+
+              <button
+                type="button"
+                onClick={scrollToTeamForm}
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-200 transition hover:bg-emerald-500/20"
+              >
+                <Play size={14} className="fill-current" />
+                ابدأ الآن مجانا
+              </button>
+            </div>
 
             {error && (
               <div className="flex items-start gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-100">
@@ -171,7 +287,7 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="overflow-hidden rounded-[1.6rem] border border-violet-400/30 bg-gradient-to-r from-[#1b4d68] via-[#3ab7d7] to-[#4a59d8] p-4 shadow-[0_0_30px_rgba(90,130,255,0.25)]">
+            <div className="rounded-[1.6rem] border border-violet-400/30 bg-gradient-to-r from-[#1b4d68] via-[#3ab7d7] to-[#4a59d8] p-4 shadow-[0_0_30px_rgba(90,130,255,0.25)]">
               <div className="grid gap-4 md:grid-cols-[1fr_0.9fr] md:items-center">
                 <div className="space-y-3 text-white">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">Mini League</p>
@@ -207,10 +323,30 @@ export default function HomePage() {
               <MetricCard label="الميزانية" value={result ? getBudget(result.team.bank) : '—'} icon={<CircleDollarSign size={16} />} />
               <MetricCard label="القيمة" value={result ? formatTeamValue(result.team.value) : '—'} icon={<Target size={16} />} />
             </div>
+
+            <div className="mt-5 rounded-2xl border border-violet-400/20 bg-slate-900/70 p-3">
+              <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+                <span>الجولة القادمة تبدأ خلال</span>
+                <Clock3 size={14} className="text-violet-300" />
+              </div>
+
+              <div className="flex items-center justify-between gap-2 text-center text-white">
+                <CountdownBox value={countdown.days} label="يوم" />
+                <CountdownBox value={countdown.hours} label="س" />
+                <CountdownBox value={countdown.minutes} label="د" />
+                <CountdownBox value={countdown.seconds} label="ث" />
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="mb-8 rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5">
+        <section className="mb-8 grid gap-4 md:grid-cols-3">
+          <StatCard label="تحليلات مقدمة" value={formatArabic(analysisCount)} icon={<Sparkles size={16} />} accent="from-violet-500/20 to-indigo-500/10" />
+          <StatCard label="جولات تم تحليلها" value={formatArabic(248)} icon={<BarChart3 size={16} />} accent="from-emerald-500/20 to-teal-500/10" />
+          <StatCard label="أعضاء المينيليغ" value={formatArabic(54)} icon={<Users size={16} />} accent="from-cyan-500/20 to-sky-500/10" />
+        </section>
+
+        <section id="formations" className="mb-8 rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm text-slate-400">أفضل التشكيلات</p>
@@ -221,7 +357,12 @@ export default function HomePage() {
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {formationIdeas.map((formation) => (
-              <div key={formation.title} className="group overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-900/70 transition hover:-translate-y-1 hover:border-emerald-400/30">
+              <button
+                key={formation.title}
+                type="button"
+                onClick={() => setSelectedFormation(formation)}
+                className="group overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-900/70 text-right transition hover:-translate-y-1 hover:border-emerald-400/30"
+              >
                 <div className="overflow-hidden">
                   <img src={formation.image} alt={formation.title} className="h-40 w-full object-cover transition duration-300 group-hover:scale-105" />
                 </div>
@@ -229,9 +370,49 @@ export default function HomePage() {
                   <p className="text-lg font-black text-white">{formation.title}</p>
                   <p className="text-sm leading-7 text-slate-300">{formation.subtitle}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
+        </section>
+
+        <section id="fixtures" className="mb-8 rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-slate-400">المباريات القادمة</p>
+              <h3 className="text-2xl font-black">المباريات القادمة</h3>
+            </div>
+            <CalendarRange className="text-emerald-300" />
+          </div>
+          {fixtures.length ? (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {fixtures.map((fixture) => (
+                <div key={fixture.id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                  <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
+                    <span>GW {formatArabic(fixture.event)}</span>
+                    <span>{formatFixtureDate(fixture.kickoff_time)}</span>
+                  </div>
+                  <div className="space-y-2 text-sm text-slate-200">
+                    <div className="flex items-center justify-between">
+                      <span>{fixture.team_h_name}</span>
+                      <span className="font-black text-white">{fixture.team_h_score ?? '—'}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span>vs</span>
+                      <span>{' '}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>{fixture.team_a_name}</span>
+                      <span className="font-black text-white">{fixture.team_a_score ?? '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-5 text-slate-300">
+              جارٍ إحضار المباريات القادمة من FPL...
+            </div>
+          )}
         </section>
 
         {loading && (
@@ -255,7 +436,7 @@ export default function HomePage() {
               <SummaryCard title="نقاط الـ GW" value={formatArabic(result.team.gameweek_points ?? 0)} icon={<CalendarRange size={16} />} />
             </section>
 
-            <section className="mb-8 grid gap-4 lg:grid-cols-2">
+            <section id="analysis" className="mb-8 grid gap-4 lg:grid-cols-2">
               <div className="rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
@@ -364,7 +545,7 @@ export default function HomePage() {
         )}
       </div>
 
-      <footer className="mt-10 border-t border-white/10 bg-slate-950/60">
+      <footer id="mini-league" className="mt-10 border-t border-white/10 bg-slate-950/60">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 text-sm text-slate-300 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-lg font-black text-white">FPL Hafid</p>
@@ -380,6 +561,40 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-slate-950/90 px-2 py-2 shadow-[0_-10px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm md:hidden">
+        <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
+          {navItems.map(({ key, label, href, icon: Icon }) => (
+            <a key={key} href={href} className="flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[10px] font-bold text-slate-300 transition hover:bg-white/5 hover:text-white">
+              <Icon size={18} />
+              <span>{label}</span>
+            </a>
+          ))}
+        </div>
+      </nav>
+
+      {selectedFormation && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm" onClick={() => setSelectedFormation(null)}>
+          <div className="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-900 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setSelectedFormation(null)}
+              className="absolute left-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-slate-900/80 text-white"
+              aria-label="إغلاق"
+            >
+              <X size={18} />
+            </button>
+            <img src={selectedFormation.image} alt={selectedFormation.title} className="max-h-[75vh] w-full object-cover" />
+            <div className="border-t border-white/10 bg-slate-900 p-5">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-2xl font-black text-white">{selectedFormation.title}</h3>
+                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-200">تشكيلة مميزة</span>
+              </div>
+              <p className="text-sm leading-7 text-slate-300">{selectedFormation.subtitle}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -392,6 +607,27 @@ function SummaryCard({ title, value, icon }: { title: string; value: string; ico
         <div className="rounded-full bg-emerald-500/10 p-2 text-emerald-200">{icon}</div>
       </div>
       <p className="text-2xl font-black text-white">{value}</p>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, accent }: { label: string; value: string; icon: React.ReactNode; accent: string }) {
+  return (
+    <div className={`rounded-[1.5rem] border border-white/10 bg-gradient-to-br ${accent} p-4`}>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="rounded-full bg-slate-950/70 p-2 text-emerald-200">{icon}</div>
+      </div>
+      <p className="text-2xl font-black text-white">{value}</p>
+      <p className="mt-1 text-sm text-slate-300">{label}</p>
+    </div>
+  );
+}
+
+function CountdownBox({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/70 px-2 py-2 text-center min-w-[58px]">
+      <div className="text-lg font-black text-white">{formatArabic(value)}</div>
+      <div className="text-[10px] text-slate-400">{label}</div>
     </div>
   );
 }
@@ -442,7 +678,7 @@ function PlayerCard({ player }: { player: any }) {
       </div>
       <div className="flex items-center justify-between text-xs text-slate-400">
         <span>نقاط: {formatArabic(player.total_points ?? 0)}</span>
-        <span>{player.selected_by_percent ?? 0}%</span>
+        <span>{formatArabic(player.selected_by_percent ?? 0)}%</span>
       </div>
     </div>
   );

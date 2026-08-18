@@ -7,12 +7,8 @@ function formatMoney(value: number | undefined): string {
   return `£${(value / 10).toFixed(1)}`;
 }
 
-function toArabicNumber(value: number): string {
-  const digits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  return String(value)
-    .split('')
-    .map((char) => (Number.isInteger(Number(char)) ? digits[Number(char)] : char))
-    .join('');
+function toWesternNumber(value: number): string {
+  return new Intl.NumberFormat('en-US').format(value);
 }
 
 export function normalizeTeamInfo(team: any): FplTeamSummary {
@@ -304,7 +300,64 @@ export function getBudget(value: number | undefined): string {
 }
 
 export function formatArabic(value: number): string {
-  return toArabicNumber(value);
+  return toWesternNumber(value);
+}
+
+export function getNextDeadlineInfo(bootstrap: any): { nextDeadline?: string; nextEventId?: number } {
+  const events = Array.isArray(bootstrap?.events) ? bootstrap.events : [];
+  const nextEvent =
+    events.find((event: any) => event?.is_next) ||
+    [...events].sort((a: any, b: any) => new Date(a.deadline_time).getTime() - new Date(b.deadline_time).getTime()).find((event: any) => new Date(event.deadline_time) > new Date()) ||
+    events[0];
+
+  if (!nextEvent) {
+    return {};
+  }
+
+  return {
+    nextDeadline: nextEvent.deadline_time || undefined,
+    nextEventId: Number(nextEvent.id ?? 0) || undefined,
+  };
+}
+
+export function normalizeFixtures(fixtures: any[], teamMap: Record<number, string>): any[] {
+  if (!Array.isArray(fixtures)) {
+    return [];
+  }
+
+  return fixtures
+    .filter((fixture) => fixture && Number.isFinite(Number(fixture.id)))
+    .map((fixture) => ({
+      id: Number(fixture.id),
+      event: Number(fixture.event ?? 0),
+      kickoff_time: fixture.kickoff_time || '',
+      team_h: Number(fixture.team_h ?? 0),
+      team_h_name: teamMap[Number(fixture.team_h)] || 'غير معروف',
+      team_a: Number(fixture.team_a ?? 0),
+      team_a_name: teamMap[Number(fixture.team_a)] || 'غير معروف',
+      team_h_score: fixture.team_h_score === null ? null : Number(fixture.team_h_score ?? 0),
+      team_a_score: fixture.team_a_score === null ? null : Number(fixture.team_a_score ?? 0),
+      finished: Boolean(fixture.finished),
+      started: Boolean(fixture.started),
+      minutes: Number(fixture.minutes ?? 0),
+    }));
+}
+
+export async function fetchFplMeta(): Promise<{ nextDeadline?: string; nextEventId?: number; fixtures?: any[] }> {
+  const bootstrapUrl = `${FPL_BASE}/bootstrap-static/`;
+  const bootstrap = await fetchJson<any>(bootstrapUrl);
+  const deadlineInfo = getNextDeadlineInfo(bootstrap);
+
+  const nextEventId = Number(deadlineInfo.nextEventId ?? bootstrap?.events?.[0]?.id ?? 0) || 0;
+  const fixtures = nextEventId
+    ? (bootstrap?.fixtures || []).filter((fixture: any) => Number(fixture.event) === Number(nextEventId))
+    : [];
+
+  return {
+    nextDeadline: deadlineInfo.nextDeadline,
+    nextEventId: nextEventId || undefined,
+    fixtures,
+  };
 }
 
 export async function fetchFplTeam(teamId: string): Promise<FplApiResponse> {
@@ -340,6 +393,16 @@ export async function fetchFplTeam(teamId: string): Promise<FplApiResponse> {
       transfers: entry?.transfers_made ?? teamSummary?.transfers ?? entry?.transfers ?? 0,
       transfer_cost: entry?.transfer_cost ?? teamSummary?.transfer_cost ?? 0,
     });
+
+    const deadlineInfo = getNextDeadlineInfo(bootstrap);
+    const nextEventId = Number(deadlineInfo.nextEventId ?? bootstrap?.events?.[0]?.id ?? 0) || 0;
+    const teamMap: Record<number, string> = {};
+    for (const item of bootstrap?.teams || []) {
+      teamMap[item.id] = item.name;
+    }
+    const upcomingFixtures = nextEventId
+      ? normalizeFixtures((bootstrap?.fixtures || []).filter((fixture: any) => Number(fixture.event) === Number(nextEventId)), teamMap)
+      : [];
 
     const elementMap = new Map<number, any>();
     for (const item of bootstrap?.elements || []) {
@@ -458,7 +521,10 @@ export async function fetchFplTeam(teamId: string): Promise<FplApiResponse> {
         team,
         players: [],
         gameweek: Number(entry?.current_event ?? teamSummary?.event ?? 1),
-        deadline: entry?.deadline_time || undefined,
+        deadline: entry?.deadline_time || deadlineInfo.nextDeadline || undefined,
+        nextDeadline: deadlineInfo.nextDeadline || undefined,
+        nextEventId: nextEventId || undefined,
+        fixtures: upcomingFixtures,
         analysis: buildAnalysis([], team),
       };
     }
@@ -467,7 +533,10 @@ export async function fetchFplTeam(teamId: string): Promise<FplApiResponse> {
       team,
       players: normalizedPlayers,
       gameweek: Number(entry?.current_event ?? teamSummary?.event ?? 1),
-      deadline: entry?.deadline_time || undefined,
+      deadline: entry?.deadline_time || deadlineInfo.nextDeadline || undefined,
+      nextDeadline: deadlineInfo.nextDeadline || undefined,
+      nextEventId: nextEventId || undefined,
+      fixtures: upcomingFixtures,
       analysis: buildAnalysis(normalizedPlayers, team),
     };
   } catch (error) {

@@ -61,10 +61,28 @@ export type FplAnalysisSummary = {
   recommendations: string[];
 };
 
+export type FplFixture = {
+  id: number;
+  event: number;
+  kickoff_time: string;
+  team_h: number;
+  team_h_name: string;
+  team_a: number;
+  team_a_name: string;
+  team_h_score: number | null;
+  team_a_score: number | null;
+  finished: boolean;
+  started: boolean;
+  minutes: number;
+};
+
 export type FplApiResponse = {
   team: FplTeamSummary;
   players: FplPlayer[];
   gameweek: number;
   deadline?: string;
+  nextDeadline?: string;
+  nextEventId?: number;
+  fixtures?: FplFixture[];
   analysis: FplAnalysisSummary;
 };
