@@ -17,15 +17,14 @@ body {
     radial-gradient(circle at top, rgba(90, 209, 141, 0.18), transparent 45%),
     linear-gradient(180deg, #06110d 0%, #0a1714 35%, #07130f 100%);
   color: #ecfdf5;
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 * {
   box-sizing: border-box;
 }
 
-body, input, button {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+body, input, button, select, textarea {
+  font-family: var(--font-tajawal), 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 ::selection {
