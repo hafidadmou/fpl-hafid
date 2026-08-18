@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDown, ArrowLeft, BarChart3, BadgeCheck, CalendarRange, CircleDollarSign, Clock3, Home, LayoutGrid, Play, Shield, Sparkles, Sword, Target, Trophy, UserRound, Users, Zap, X } from 'lucide-react';
 import type { FplApiResponse, FplFixture, FplPlayer } from '@/types/fpl';
-import { formatArabic, getFriendlyApiError, getPlayerPositionName, getBudget } from '@/lib/fpl';
+import { buildAnalysis, formatArabic, getFriendlyApiError, getPlayerPositionName, getBudget } from '@/lib/fpl';
 
 const defaultState: FplApiResponse | null = null;
 
@@ -54,6 +54,22 @@ const formationIdeas = [
   { title: '4-4-2', image: '/images/IMG_7050.jpeg', subtitle: 'تشكيلة تقليدية لبداية الموسم' },
 ];
 
+const preseasonPresetPlayers: FplPlayer[] = [
+  { id: 101, first_name: 'أليسون', second_name: 'بيكر', web_name: 'أليسون', position: 'GK', team: 1, team_name: 'ليفربول', total_points: 0, points_per_game: 0, now_cost: 55, selected_by_percent: 14, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 2, chip: null },
+  { id: 102, first_name: 'ترنت', second_name: 'ألكسندر-أرنولد', web_name: 'أرنولد', position: 'DEF', team: 1, team_name: 'ليفربول', total_points: 0, points_per_game: 0, now_cost: 70, selected_by_percent: 18, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 3, chip: null },
+  { id: 103, first_name: 'فابيو', second_name: 'كوانتراو', web_name: 'كوانتراو', position: 'DEF', team: 2, team_name: 'تشيلسي', total_points: 0, points_per_game: 0, now_cost: 62, selected_by_percent: 12, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 3, chip: null },
+  { id: 104, first_name: 'كيران', second_name: 'تريبير', web_name: 'تريبير', position: 'DEF', team: 3, team_name: 'مانشستر سيتي', total_points: 0, points_per_game: 0, now_cost: 64, selected_by_percent: 11, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 2, chip: null },
+  { id: 105, first_name: 'ديكلان', second_name: 'رايس', web_name: 'رايس', position: 'MID', team: 4, team_name: 'أرسنال', total_points: 0, points_per_game: 0, now_cost: 82, selected_by_percent: 24, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 2, chip: null },
+  { id: 106, first_name: 'بوكايو', second_name: 'ساكا', web_name: 'ساكا', position: 'MID', team: 4, team_name: 'أرسنال', total_points: 0, points_per_game: 0, now_cost: 88, selected_by_percent: 28, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 2, chip: null },
+  { id: 107, first_name: 'موسى', second_name: 'سايس', web_name: 'سايس', position: 'MID', team: 5, team_name: 'توتنهام', total_points: 0, points_per_game: 0, now_cost: 78, selected_by_percent: 16, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 4, chip: null },
+  { id: 108, first_name: 'إيدرسون', second_name: 'إبراهيم', web_name: 'إبراهيم', position: 'MID', team: 6, team_name: 'إيفرتون', total_points: 0, points_per_game: 0, now_cost: 74, selected_by_percent: 15, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 3, chip: null },
+  { id: 109, first_name: 'هاري', second_name: 'كين', web_name: 'كين', position: 'FWD', team: 7, team_name: 'بايرن', total_points: 0, points_per_game: 0, now_cost: 94, selected_by_percent: 32, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 2, chip: null },
+  { id: 110, first_name: 'عمر', second_name: 'مرباح', web_name: 'مرباح', position: 'FWD', team: 8, team_name: 'أستون فيلا', total_points: 0, points_per_game: 0, now_cost: 83, selected_by_percent: 20, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 3, chip: null },
+  { id: 111, first_name: 'إيرلينغ', second_name: 'هالاند', web_name: 'هالاند', position: 'FWD', team: 3, team_name: 'مانشستر سيتي', total_points: 0, points_per_game: 0, now_cost: 98, selected_by_percent: 35, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 1, chip: null },
+  { id: 112, first_name: 'برونو', second_name: 'فيرن', web_name: 'فيرن', position: 'MID', team: 9, team_name: 'مانشستر يونايتد', total_points: 0, points_per_game: 0, now_cost: 74, selected_by_percent: 19, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 3, chip: null },
+  { id: 113, first_name: 'ماركوس', second_name: 'راشفورد', web_name: 'راشفورد', position: 'FWD', team: 9, team_name: 'مانشستر يونايتد', total_points: 0, points_per_game: 0, now_cost: 81, selected_by_percent: 17, form: 0, goals_scored: 0, assists: 0, goals_conceded: 0, clean_sheets: 0, bonus: 0, minutes: 0, starts: 0, influence: 0, creativity: 0, threat: 0, ict_index: 0, news: '', status: '', is_captain: false, is_vice_captain: false, is_on_bench: false, is_starting: true, fixture_difficulty: 3, chip: null },
+];
+
 const navItems = [
   { key: 'home', label: 'الرئيسية', href: '#home', icon: Home },
   { key: 'analysis', label: 'التحليل', href: '#analysis', icon: BarChart3 },
@@ -71,6 +87,9 @@ export default function HomePage() {
   const [fixtures, setFixtures] = useState<FplFixture[]>([]);
   const [selectedFormation, setSelectedFormation] = useState<(typeof formationIdeas)[number] | null>(null);
   const [analysisCount, setAnalysisCount] = useState(1284);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualPlayers, setManualPlayers] = useState<FplPlayer[]>([]);
+  const [manualEvaluation, setManualEvaluation] = useState<FplApiResponse | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -161,7 +180,8 @@ export default function HomePage() {
       BENCH: [],
     };
 
-    if (!result?.players?.length) {
+    const allPlayers = result?.players ?? [];
+    if (!allPlayers.length) {
       return emptySquads;
     }
 
@@ -173,7 +193,7 @@ export default function HomePage() {
       BENCH: [],
     };
 
-    for (const player of result.players) {
+    for (const player of allPlayers) {
       if (player.is_on_bench) {
         squads.BENCH.push(player);
       } else if (player.position === 'GK') {
@@ -182,13 +202,95 @@ export default function HomePage() {
         squads.DEF.push(player);
       } else if (player.position === 'MID') {
         squads.MID.push(player);
-      } else {
+      } else if (player.position === 'FWD') {
         squads.FWD.push(player);
+      } else {
+        squads.BENCH.push(player);
       }
     }
 
     return squads;
-  }, [result]);
+  }, [result?.players]);
+
+  const hasSquadData = Boolean(result && Array.isArray(result.players) && result.players.length > 0);
+  const isSeasonNotStarted = Boolean(
+    result &&
+      Array.isArray(result.players) &&
+      result.players.length === 0 &&
+      !result.deadline &&
+      !result.nextDeadline,
+  );
+  const isSquadLoading = loading || (!result && !error);
+
+  const toggleManualPlayer = (player: FplPlayer) => {
+    setManualPlayers((current) => {
+      const exists = current.some((item) => item.id === player.id);
+      if (exists) {
+        return current.filter((item) => item.id !== player.id);
+      }
+      return [...current, player];
+    });
+    setManualEvaluation(null);
+  };
+
+  const evaluateManualSquad = () => {
+    if (manualPlayers.length < 11) {
+      return;
+    }
+
+    const selectedPlayers = manualPlayers.slice(0, 11).map((player, index) => ({
+      ...player,
+      total_points: Number(player.total_points ?? 0),
+      points_per_game: Number(player.points_per_game ?? 0),
+      now_cost: Number(player.now_cost ?? 0),
+      selected_by_percent: Number(player.selected_by_percent ?? 0),
+      form: Number(player.form ?? 0),
+      goals_scored: Number(player.goals_scored ?? 0),
+      assists: Number(player.assists ?? 0),
+      goals_conceded: Number(player.goals_conceded ?? 0),
+      clean_sheets: Number(player.clean_sheets ?? 0),
+      bonus: Number(player.bonus ?? 0),
+      minutes: Number(player.minutes ?? 0),
+      starts: Number(player.starts ?? 0),
+      influence: Number(player.influence ?? 0),
+      creativity: Number(player.creativity ?? 0),
+      threat: Number(player.threat ?? 0),
+      ict_index: Number(player.ict_index ?? 0),
+      news: player.news || '',
+      status: player.status || '',
+      is_captain: index === 0,
+      is_vice_captain: index === 1,
+      is_on_bench: false,
+      is_starting: true,
+      fixture_difficulty: Number(player.fixture_difficulty ?? 2),
+      chip: null,
+    }));
+
+    const teamValue = selectedPlayers.reduce((total, player) => total + Number(player.now_cost ?? 0), 0);
+    const team: FplApiResponse['team'] = {
+      id: 0,
+      name: 'تشكيلة مخصصة',
+      manager_name: 'مستخدم',
+      overall_points: 0,
+      overall_rank: null,
+      gameweek_points: 0,
+      gameweek_rank: null,
+      bank: 48,
+      value: teamValue,
+      transfers: 0,
+      transfer_cost: 0,
+      summary: 'تقييم تشكيلة مخصصة',
+    };
+
+    const evaluation = {
+      team,
+      players: selectedPlayers,
+      gameweek: 1,
+      analysis: buildAnalysis(selectedPlayers, team),
+    } satisfies FplApiResponse;
+
+    setManualEvaluation(evaluation);
+  };
 
   const scrollToTeamForm = () => {
     document.getElementById('team-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -278,6 +380,86 @@ export default function HomePage() {
                 <Play size={14} className="fill-current" />
                 ابدأ الآن مجانا
               </button>
+            </div>
+
+            <div className="mt-5 rounded-[1.5rem] border border-violet-400/20 bg-slate-900/70 p-4">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm text-slate-400">تقييم قبل الموسم</p>
+                  <h3 className="text-xl font-black text-white">تقييم التشكيلة يدويًا</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setManualMode((value) => !value)}
+                  className="rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1.5 text-xs font-bold text-violet-200"
+                >
+                  {manualMode ? 'إخفاء' : 'فتح'}
+                </button>
+              </div>
+
+              {manualMode && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-300">
+                    <span>اللاعبون المختارين: {manualPlayers.length}/11</span>
+                    <span className="font-bold text-emerald-200">{manualPlayers.length >= 11 ? 'جاهز للتقييم' : 'اختر 11 لاعبًا'}</span>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {preseasonPresetPlayers.map((player) => {
+                      const selected = manualPlayers.some((item) => item.id === player.id);
+                      return (
+                        <button
+                          key={player.id}
+                          type="button"
+                          onClick={() => toggleManualPlayer(player)}
+                          className={`rounded-2xl border p-3 text-right transition ${selected ? 'border-emerald-400/60 bg-emerald-500/10 text-white' : 'border-white/10 bg-slate-950/60 text-slate-200 hover:border-violet-400/40'}`}
+                        >
+                          <div className="mb-1 flex items-center justify-between gap-3">
+                            <span className="font-black">{player.web_name}</span>
+                            <span className="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-200">{player.position}</span>
+                          </div>
+                          <div className="text-xs text-slate-300">{player.team_name}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={evaluateManualSquad}
+                    disabled={manualPlayers.length < 11}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-400 to-cyan-300 px-4 py-2.5 text-sm font-black text-slate-950 transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    تقييم هذه التشكيلة
+                  </button>
+
+                  {manualEvaluation && (
+                    <div className="rounded-[1.4rem] border border-emerald-400/20 bg-emerald-500/5 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-slate-400">التقييم الحالي</p>
+                          <h4 className="text-2xl font-black text-white">{manualEvaluation.analysis.overallScore}/100</h4>
+                        </div>
+                        <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-xs font-bold text-emerald-200">تشكيلة مخصصة</span>
+                      </div>
+
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        {manualEvaluation.analysis.categories.map((category) => (
+                          <div key={category.name} className="rounded-2xl border border-white/10 bg-slate-900/70 p-3">
+                            <div className="mb-2 flex items-center justify-between text-xs text-slate-400">
+                              <span>{category.name}</span>
+                              <span className="font-bold text-emerald-200">{category.score}</span>
+                            </div>
+                            <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                              <div className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300" style={{ width: `${category.score}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {error && (
@@ -499,17 +681,23 @@ export default function HomePage() {
               </div>
               <div className="pitch-grid rounded-[1.6rem] border border-white/10 p-4">
                 <div className="space-y-6">
-                  <PositionGroup title="حارس المرمى" players={squadByRole.GK} />
-                  <PositionGroup title="الدفاع" players={squadByRole.DEF} />
-                  <PositionGroup title="الوسط" players={squadByRole.MID} />
-                  <PositionGroup title="الهجوم" players={squadByRole.FWD} />
+                  <PositionGroup title="حارس المرمى" players={squadByRole.GK} isLoading={isSquadLoading} hasData={hasSquadData} seasonNotStarted={isSeasonNotStarted} />
+                  <PositionGroup title="الدفاع" players={squadByRole.DEF} isLoading={isSquadLoading} hasData={hasSquadData} seasonNotStarted={isSeasonNotStarted} />
+                  <PositionGroup title="الوسط" players={squadByRole.MID} isLoading={isSquadLoading} hasData={hasSquadData} seasonNotStarted={isSeasonNotStarted} />
+                  <PositionGroup title="الهجوم" players={squadByRole.FWD} isLoading={isSquadLoading} hasData={hasSquadData} seasonNotStarted={isSeasonNotStarted} />
                   <div className="pt-2">
                     <h4 className="mb-3 text-lg font-bold text-slate-200">الدكة</h4>
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                      {squadByRole.BENCH.map((player) => (
-                        <PlayerCard key={player.id} player={player} />
-                      ))}
-                    </div>
+                    {isSquadLoading ? (
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        {[1, 2, 3, 4].map((item) => <LoadingPlayerCard key={item} />)}
+                      </div>
+                    ) : (
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        {squadByRole.BENCH.length ? squadByRole.BENCH.map((player) => (
+                          <PlayerCard key={player.id} player={player} />
+                        )) : <EmptySlot text="الدكة" seasonNotStarted={isSeasonNotStarted} />}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -644,19 +832,49 @@ function MetricCard({ label, value, icon }: { label: string; value: string; icon
   );
 }
 
-function PositionGroup({ title, players }: { title: string; players: any[] }) {
+function PositionGroup({ title, players, isLoading, hasData, seasonNotStarted }: { title: string; players: any[]; isLoading: boolean; hasData: boolean; seasonNotStarted: boolean }) {
   return (
     <div>
       <h4 className="mb-3 text-lg font-bold text-slate-200">{title}</h4>
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {players.length ? players.map((player) => <PlayerCard key={player.id} player={player} />) : <EmptySlot text={title} />}
-      </div>
+      {isLoading ? (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((item) => <LoadingPlayerCard key={item} />)}
+        </div>
+      ) : players.length ? (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {players.map((player) => <PlayerCard key={player.id} player={player} />)}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-4 text-sm text-slate-400">
+          {seasonNotStarted
+            ? 'لم يبدأ الموسم بعد — ستظهر تشكيلتك هنا بعد إغلاق باب التحويلات للجولة الأولى'
+            : hasData
+              ? `${title}: لا توجد لاعبين في هذا الدور حاليًا`
+              : 'لا توجد بيانات للفريق في الوقت الحالي'}
+        </div>
+      )}
     </div>
   );
 }
 
-function EmptySlot({ text }: { text: string }) {
-  return <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-4 text-sm text-slate-400">{text}: لا توجد تشكيلة نشطة حاليًا</div>;
+function LoadingPlayerCard() {
+  return (
+    <div className="animate-pulse rounded-[1.3rem] border border-white/10 bg-slate-900/75 p-3">
+      <div className="mb-3 h-5 w-2/3 rounded-full bg-slate-700" />
+      <div className="mb-2 h-4 w-1/2 rounded-full bg-slate-700" />
+      <div className="h-4 w-full rounded-full bg-slate-700" />
+    </div>
+  );
+}
+
+function EmptySlot({ text, seasonNotStarted }: { text: string; seasonNotStarted: boolean }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-4 text-sm text-slate-400">
+      {seasonNotStarted
+        ? 'لم يبدأ الموسم بعد — ستظهر تشكيلتك هنا بعد إغلاق باب التحويلات للجولة الأولى'
+        : `${text}: لا توجد بيانات للفريق في الوقت الحالي`}
+    </div>
+  );
 }
 
 function PlayerCard({ player }: { player: any }) {
