@@ -134,6 +134,42 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Inspect live FPL entry payload",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"(Invoke-WebRequest -Uri 'https://fantasy.premierleague.com/api/entry/2281/' -UseBasicParsing).Content | Select-Object -First 1 | Out-String\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build and verify local fix",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Verify final FPL fixes build",
+			"type": "shell",
+			"command": "npm.cmd run build",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Copy remaining startup formation images",
+			"type": "shell",
+			"command": "& 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe' -NoProfile -ExecutionPolicy Bypass -Command \"if (!(Test-Path 'public/images')) { New-Item -ItemType Directory -Path 'public/images' | Out-Null }; Copy-Item -Force 'IMG_6979.jpg','IMG_6980.jpg','IMG_6981.jpg','IMG_6982.jpg' 'public/images'; Get-ChildItem 'public/images' | Select-Object -ExpandProperty Name\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }

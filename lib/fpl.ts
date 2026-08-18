@@ -16,18 +16,20 @@ function toArabicNumber(value: number): string {
 }
 
 export function normalizeTeamInfo(team: any): FplTeamSummary {
-  const teamValue = Number(team?.value ?? team?.team_value ?? 0);
-  const bank = Number(team?.bank ?? 0);
+  const teamValue = Number(team?.value ?? team?.team_value ?? team?.last_deadline_value ?? 0);
+  const bank = Number(team?.bank ?? team?.last_deadline_bank ?? 0);
   const transfers = Number(team?.transfers_made ?? team?.transfers ?? 0);
   const transferCost = Number(team?.transfer_cost ?? 0);
+  const overallPoints = Number(team?.summary_overall_points ?? team?.overall_points ?? team?.total_points ?? 0);
+  const gameweekPoints = Number(team?.summary_event_points ?? team?.event_points ?? team?.points ?? 0);
 
   return {
     id: Number(team?.id ?? 0),
-    name: team?.name || 'اسم الفريق',
-    manager_name: team?.manager_name || team?.player_name || undefined,
-    overall_points: Number(team?.summary_overall_points ?? team?.overall_points ?? 0),
+    name: team?.name || team?.player_name || 'اسم الفريق',
+    manager_name: team?.manager_name || team?.player_name || team?.player_first_name || team?.player_last_name || undefined,
+    overall_points: overallPoints,
     overall_rank: team?.summary_overall_rank ?? team?.overall_rank ?? null,
-    gameweek_points: Number(team?.summary_event_points ?? team?.event_points ?? 0),
+    gameweek_points: gameweekPoints,
     gameweek_rank: team?.summary_event_rank ?? team?.event_rank ?? null,
     bank: bank,
     value: teamValue,
@@ -111,7 +113,16 @@ export function buildAnalysis(players: FplPlayer[], team: FplTeamSummary): FplAn
   const weaknesses: string[] = [];
   const recommendations: string[] = [];
 
-  if (mid.length >= 3 && avg(mid, 'total_points') > 35) {
+  if (!players.length) {
+    strengths.push('لا توجد بيانات نشطة للفريق في الوقت الحالي؛ يُرجى مراجعة تشكيلة البداية أو الانتظار حتى يبدأ الموسم.');
+    if (team.overall_points && team.overall_points > 0) {
+      strengths.push(`سجل الفريق في الموسم الماضي كان قويًا بإجمالي ${team.overall_points} نقطة، وهو مؤشر جيد للانطلاق في الموسم الجديد.`);
+    }
+    weaknesses.push('لا تزال بيانات التشكيلة غير متاحة في هذه المرحلة من الموسم.');
+    recommendations.push('تابع تطورات الفريق ومباريات الجولة القادمة قبل اتخاذ تغييرات كبيرة.');
+  }
+
+  if (players.length && mid.length >= 3 && avg(mid, 'total_points') > 35) {
     strengths.push('قوة خط الوسط واضحة بسبب إنتاجية اللاعبين في التمريرات والإسهامات');
   }
   if (fwd.length >= 2 && avg(fwd, 'goals_scored') > 0.4) {
@@ -306,25 +317,28 @@ export async function fetchFplTeam(teamId: string): Promise<FplApiResponse> {
   const bootstrapUrl = `${FPL_BASE}/bootstrap-static/`;
 
   try {
-    const [entry, bootstrap] = await Promise.all([
+    const [entry, bootstrap, history] = await Promise.all([
       fetchJson<any>(entryUrl),
       fetchJson<any>(bootstrapUrl),
+      fetchJson<any>(`${entryUrl}history/`).catch(() => ({ current: [], past: [] })),
     ]);
 
     const teamSummary = entry?.summary || entry?.entry || {};
+    const latestHistory = Array.isArray(history?.past) && history.past.length ? history.past[history.past.length - 1] : null;
     const team = normalizeTeamInfo({
       ...teamSummary,
       id,
       name: entry?.name || teamSummary?.name || `فريق ${id}`,
+      player_name: entry?.player_first_name ? `${entry.player_first_name} ${entry.player_last_name || ''}`.trim() : teamSummary?.player_name,
       manager_name: entry?.player_first_name || entry?.player_last_name || teamSummary?.manager_name,
-      overall_points: entry?.summary_overall_points ?? teamSummary?.overall_points,
-      overall_rank: entry?.summary_overall_rank ?? teamSummary?.overall_rank,
-      gameweek_points: entry?.summary_event_points ?? teamSummary?.event_points,
-      gameweek_rank: entry?.summary_event_rank ?? teamSummary?.event_rank,
-      bank: entry?.last_deadline_bank ?? teamSummary?.bank ?? 0,
-      value: entry?.last_deadline_value ?? teamSummary?.value ?? 0,
-      transfers: entry?.transfers_made ?? teamSummary?.transfers,
-      transfer_cost: entry?.transfer_cost ?? teamSummary?.transfer_cost,
+      overall_points: entry?.summary_overall_points ?? teamSummary?.overall_points ?? entry?.overall_points ?? latestHistory?.total_points ?? 0,
+      overall_rank: entry?.summary_overall_rank ?? teamSummary?.overall_rank ?? entry?.overall_rank ?? latestHistory?.rank ?? null,
+      gameweek_points: entry?.summary_event_points ?? teamSummary?.event_points ?? entry?.event_points ?? history?.current?.[0]?.points ?? 0,
+      gameweek_rank: entry?.summary_event_rank ?? teamSummary?.event_rank ?? entry?.event_rank ?? history?.current?.[0]?.rank ?? null,
+      bank: entry?.last_deadline_bank ?? teamSummary?.bank ?? entry?.bank ?? 0,
+      value: entry?.last_deadline_value ?? teamSummary?.value ?? entry?.value ?? 0,
+      transfers: entry?.transfers_made ?? teamSummary?.transfers ?? entry?.transfers ?? 0,
+      transfer_cost: entry?.transfer_cost ?? teamSummary?.transfer_cost ?? 0,
     });
 
     const elementMap = new Map<number, any>();

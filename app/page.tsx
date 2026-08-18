@@ -15,6 +15,14 @@ function formatPosition(position: string): string {
   return getPlayerPositionName(position);
 }
 
+const formationIdeas = [
+  { title: '4-3-3 Angriff', image: '/images/IMG_6979.jpg', subtitle: 'توازن بين الدفاع والوسط والهجوم' },
+  { title: '4-2-3-1', image: '/images/IMG_6980.jpg', subtitle: 'ضغط مرتفع ومرونة هجومية' },
+  { title: '3-5-2', image: '/images/IMG_6981.jpg', subtitle: 'عرضية واسعة وعمق في الأطراف' },
+  { title: '5-3-2', image: '/images/IMG_6982.jpg', subtitle: 'استقرار دفاعي مع جناحين متقدمين' },
+  { title: '4-4-2', image: '/images/IMG_7050.jpeg', subtitle: 'تشكيلة تقليدية لبداية الموسم' },
+];
+
 export default function HomePage() {
   const [teamId, setTeamId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -199,6 +207,30 @@ export default function HomePage() {
               <MetricCard label="الميزانية" value={result ? getBudget(result.team.bank) : '—'} icon={<CircleDollarSign size={16} />} />
               <MetricCard label="القيمة" value={result ? formatTeamValue(result.team.value) : '—'} icon={<Target size={16} />} />
             </div>
+          </div>
+        </section>
+
+        <section className="mb-8 rounded-[1.75rem] border border-white/10 bg-slate-950/60 p-5">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-slate-400">أفضل التشكيلات</p>
+              <h3 className="text-2xl font-black">أفضل التشكيلات لبداية الموسم</h3>
+            </div>
+            <div className="rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-xs text-violet-200">Start of Season</div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            {formationIdeas.map((formation) => (
+              <div key={formation.title} className="group overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-900/70 transition hover:-translate-y-1 hover:border-emerald-400/30">
+                <div className="overflow-hidden">
+                  <img src={formation.image} alt={formation.title} className="h-40 w-full object-cover transition duration-300 group-hover:scale-105" />
+                </div>
+                <div className="space-y-2 p-4">
+                  <p className="text-lg font-black text-white">{formation.title}</p>
+                  <p className="text-sm leading-7 text-slate-300">{formation.subtitle}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -388,7 +420,7 @@ function PositionGroup({ title, players }: { title: string; players: any[] }) {
 }
 
 function EmptySlot({ text }: { text: string }) {
-  return <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-4 text-sm text-slate-400">{text} غير متاح</div>;
+  return <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/40 p-4 text-sm text-slate-400">{text}: لا توجد تشكيلة نشطة حاليًا</div>;
 }
 
 function PlayerCard({ player }: { player: any }) {
