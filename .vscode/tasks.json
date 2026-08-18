@@ -84,6 +84,56 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "build"
+		},
+		{
+			"label": "Git commit changes",
+			"type": "shell",
+			"command": "& 'C:\\Program Files\\Git\\cmd\\git.exe' commit -m \"Fix FPL fetch logic and update brand assets\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Git commit verified site fix",
+			"type": "shell",
+			"command": "& 'C:\\Program Files\\Git\\cmd\\git.exe' commit -m 'Fix FPL fetch logic and update brand assets'",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Git push to origin main",
+			"type": "shell",
+			"command": "& 'C:\\Program Files\\Git\\cmd\\git.exe' push origin main",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Probe production FPL behavior",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"node -e \\\"fetch('https://fantasy.premierleague.com/api/entry/2281/').then(r => r.text()).then(t => { console.log('status', r.status); console.log(t.slice(0, 300)); });\\\"\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Verify production fix builds cleanly",
+			"type": "shell",
+			"command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"npm.cmd run build\"",
+			"isBackground": false,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Commit and push null-safe FPL fix",
+			"type": "shell",
+			"command": "& 'C:\\Program Files\\Git\\cmd\\git.exe' status --short; & 'C:\\Program Files\\Git\\cmd\\git.exe' add .; & 'C:\\Program Files\\Git\\cmd\\git.exe' commit -m 'Handle null current event and empty squad gracefully'; & 'C:\\Program Files\\Git\\cmd\\git.exe' push origin main",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }

@@ -23,6 +23,11 @@ export async function POST(request: Request) {
       data,
     });
   } catch (error) {
+    console.error('FPL route failed', {
+      teamId: String((await request.clone().json()).teamId || '').trim(),
+      error: error instanceof Error ? error.message : error,
+    });
+
     return NextResponse.json(
       {
         success: false,

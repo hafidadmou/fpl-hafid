@@ -277,6 +277,10 @@ export function getFriendlyApiError(error: unknown): string {
     return 'تجاوزت الطلبات الحد المسموح به الآن. حاول مرة أخرى بعد قليل.';
   }
 
+  if (message.includes('Empty squad') || message.includes('No picks') || message.includes('no active picks')) {
+    return 'لا توجد تشكيلة نشطة لهذا الفريق حاليًا. قد تكون البطولة لم تبدأ بعد أو لا تزال البيانات غير متاحة.';
+  }
+
   if (message.includes('fetch') || message.includes('Failed to fetch')) {
     return 'تعذر الوصول إلى خادم FPL في الوقت الحالي. حاول مرة أخرى لاحقًا.';
   }
@@ -436,13 +440,19 @@ export async function fetchFplTeam(teamId: string): Promise<FplApiResponse> {
     }
 
     if (!normalizedPlayers.length) {
-      throw new Error('Empty squad');
+      return {
+        team,
+        players: [],
+        gameweek: Number(entry?.current_event ?? teamSummary?.event ?? 1),
+        deadline: entry?.deadline_time || undefined,
+        analysis: buildAnalysis([], team),
+      };
     }
 
     return {
       team,
       players: normalizedPlayers,
-      gameweek: Number(entry?.current_event ?? 1),
+      gameweek: Number(entry?.current_event ?? teamSummary?.event ?? 1),
       deadline: entry?.deadline_time || undefined,
       analysis: buildAnalysis(normalizedPlayers, team),
     };
