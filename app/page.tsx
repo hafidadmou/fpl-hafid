@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { AlertTriangle, ArrowLeft, BarChart3, BadgeCheck, CalendarRange, CircleDollarSign, Shield, Sword, Target, Trophy, UserRound, Zap } from 'lucide-react';
-import type { FplApiResponse } from '@/types/fpl';
+import type { FplApiResponse, FplPlayer } from '@/types/fpl';
 import { formatArabic, getFriendlyApiError, getPlayerPositionName, getBudget } from '@/lib/fpl';
 
 const defaultState: FplApiResponse | null = null;
@@ -55,17 +55,26 @@ export default function HomePage() {
   };
 
   const squadByRole = useMemo(() => {
+    const emptySquads: Record<'GK' | 'DEF' | 'MID' | 'FWD' | 'BENCH', FplPlayer[]> = {
+      GK: [],
+      DEF: [],
+      MID: [],
+      FWD: [],
+      BENCH: [],
+    };
+
     if (!result?.players?.length) {
-      return {
-        GK: [],
-        DEF: [],
-        MID: [],
-        FWD: [],
-        BENCH: [],
-      };
+      return emptySquads;
     }
 
-    const squads = { GK: [], DEF: [], MID: [], FWD: [], BENCH: [] };
+    const squads: Record<'GK' | 'DEF' | 'MID' | 'FWD' | 'BENCH', FplPlayer[]> = {
+      GK: [],
+      DEF: [],
+      MID: [],
+      FWD: [],
+      BENCH: [],
+    };
+
     for (const player of result.players) {
       if (player.is_on_bench) {
         squads.BENCH.push(player);

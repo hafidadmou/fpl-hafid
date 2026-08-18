@@ -133,7 +133,7 @@ export function buildAnalysis(players: FplPlayer[], team: FplTeamSummary): FplAn
   if (!captain || captain.total_points < 25) {
     weaknesses.push('اختيار القائد الحالي لا يبدو مثاليًا مقارنةً بخيارات بديلة محتملة');
   }
-  if (team.bank < 0.5) {
+  if ((team.bank ?? 0) < 0.5) {
     weaknesses.push('لا توجد أموال كافية في البنك للحصول على إضافة قوية قبل التمرير التالي');
   }
 
