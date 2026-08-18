@@ -95,11 +95,13 @@ export default function HomePage() {
   return (
     <main className="rtl min-h-screen text-white">
       <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <header className="mb-8 flex items-center justify-between rounded-full border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm">
+        <header className="mb-8 flex items-center justify-between rounded-full border border-violet-400/30 bg-slate-950/70 px-4 py-3 shadow-[0_0_30px_rgba(123,93,255,0.2)] backdrop-blur-sm">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-lime-300 text-sm font-black text-slate-900 shadow-glow">F</div>
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-yellow-400/60 bg-slate-950/70 shadow-[0_0_15px_rgba(250,204,21,0.3)]">
+              <img src="/images/IMG_6876.png" alt="شعار FPL Hafid" className="h-full w-full object-cover" />
+            </div>
             <div>
-              <p className="text-lg font-black tracking-tight">FPL Hafid</p>
+              <p className="text-lg font-black tracking-tight text-white">FPL Hafid</p>
               <p className="text-[10px] text-slate-300">منصة تحليل فرق FPL</p>
             </div>
           </div>
@@ -160,6 +162,27 @@ export default function HomePage() {
                 <span>{error}</span>
               </div>
             )}
+
+            <div className="overflow-hidden rounded-[1.6rem] border border-violet-400/30 bg-gradient-to-r from-[#1b4d68] via-[#3ab7d7] to-[#4a59d8] p-4 shadow-[0_0_30px_rgba(90,130,255,0.25)]">
+              <div className="grid gap-4 md:grid-cols-[1fr_0.9fr] md:items-center">
+                <div className="space-y-3 text-white">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-100">Mini League</p>
+                  <h3 className="text-2xl font-black leading-tight">انضم إلى مينيليغ FPL Hafid</h3>
+                  <p className="text-sm leading-7 text-cyan-50/90">تحدّ أصدقائك، شارك في الجولات، ونافس في أفضل التشكيلات في الموسم الحالي.</p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs text-cyan-50/80">كود الانضمام</span>
+                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-lg font-black text-yellow-200 shadow-sm">wmp1fb</span>
+                  </div>
+                  <a href="https://instagram.com/Fplhafid" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 text-sm font-bold text-white transition hover:bg-white/20">
+                    <span>Instagram</span>
+                    <span>@Fplhafid</span>
+                  </a>
+                </div>
+                <div className="flex justify-center">
+                  <img src="/images/IMG_7050.jpeg" alt="دعوة انضمام مينيليغ FPL Hafid" className="h-full max-h-[280px] w-full rounded-[1.2rem] border border-white/20 object-cover shadow-[0_15px_35px_rgba(15,23,42,0.35)]" />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="rounded-[1.6rem] border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 to-transparent p-4">
@@ -315,9 +338,14 @@ export default function HomePage() {
             <p className="text-lg font-black text-white">FPL Hafid</p>
             <p>منصة تحليل فرق Fantasy Premier League</p>
           </div>
-          <p className="max-w-xl text-xs leading-7 text-slate-400">
-            FPL Hafid منصة تحليل مستقلة وليست تابعة أو معتمدة من Fantasy Premier League أو Premier League.
-          </p>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <a href="https://instagram.com/Fplhafid" target="_blank" rel="noreferrer" className="text-sm font-bold text-emerald-200 transition hover:text-emerald-100">
+              @Fplhafid
+            </a>
+            <p className="max-w-xl text-xs leading-7 text-slate-400">
+              FPL Hafid منصة تحليل مستقلة وليست تابعة أو معتمدة من Fantasy Premier League أو Premier League.
+            </p>
+          </div>
         </div>
       </footer>
     </main>

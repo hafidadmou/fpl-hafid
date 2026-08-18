@@ -328,8 +328,19 @@ export async function fetchFplTeam(teamId: string): Promise<FplApiResponse> {
       elementMap.set(item.id, item);
     }
 
-    const squad = await fetchJson<any>(`${entryUrl}event/50/picks/`).catch(() => null);
-    const picks = Array.isArray(squad?.picks) ? squad.picks : [];
+    const currentEvent = Number(entry?.current_event ?? entry?.summary?.event ?? entry?.summary_event ?? 1);
+    const eventCandidates = Array.from(new Set([currentEvent, currentEvent - 1, 1].filter((value) => Number.isFinite(value) && value > 0))).slice(0, 3);
+
+    let picks: any[] = [];
+    let squad: any = null;
+
+    for (const eventNumber of eventCandidates) {
+      squad = await fetchJson<any>(`${entryUrl}event/${eventNumber}/picks/`).catch(() => null);
+      if (Array.isArray(squad?.picks) && squad.picks.length) {
+        picks = squad.picks;
+        break;
+      }
+    }
 
     const playerIds = picks.map((pick: any) => Number(pick.element));
     const activePlayers = bootstrap?.elements?.filter((element: any) => playerIds.includes(Number(element.id))) || [];
