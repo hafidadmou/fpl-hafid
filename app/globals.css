@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(90, 209, 141, 0.18), transparent 45%),
+    linear-gradient(180deg, #06110d 0%, #0a1714 35%, #07130f 100%);
+  color: #ecfdf5;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body, input, button {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+::selection {
+  background: rgba(90, 209, 141, 0.35);
+}
+
+.rtl {
+  direction: rtl;
+}
+
+.floating-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.floating-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(155, 255, 190, 0.14), transparent 45%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.floating-card:hover::before {
+  opacity: 1;
+}
+
+.progress-bar {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #5ad18d 0%, #83ebad 100%);
+  box-shadow: 0 0 20px rgba(90, 209, 141, 0.35);
+}
+
+.pitch-grid {
+  background:
+    linear-gradient(180deg, rgba(11, 29, 22, 0.9), rgba(9, 22, 17, 0.95)),
+    linear-gradient(90deg, rgba(130, 255, 173, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(130, 255, 173, 0.06) 1px, transparent 1px);
+  background-size: auto, 34px 34px, 34px 34px;
+}
+
+.player-card {
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.player-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(90, 209, 141, 0.45);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.9rem;
+  height: 1.9rem;
+  padding: 0 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@media (max-width: 640px) {
+  .mobile-compact {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
